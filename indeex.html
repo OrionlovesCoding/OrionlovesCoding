@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sayıyı Bil</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #000;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .title {
+      font-size: 52px;
+      font-weight: bold;
+      color: gray;
+      margin-bottom: 12px;
+      line-height: 1.1;
+    }
+
+    .streaks {
+      font-size: 15px;
+      color: #bbb;
+      margin-bottom: 28px;
+      line-height: 1.8;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      max-width: 260px;
+      padding: 18px;
+      font-size: 24px;
+      border: 2px solid #444;
+      border-radius: 14px;
+      background: #111;
+      color: white;
+      text-align: center;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: #888;
+      box-shadow: 0 0 10px rgba(255,255,255,0.08);
+    }
+
+    button {
+      width: 100%;
+      max-width: 260px;
+      padding: 16px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 14px;
+      background: #222;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+      background: #333;
+    }
+
+    .result {
+      margin-top: 18px;
+      font-size: 28px;
+      font-weight: bold;
+      min-height: 40px;
+    }
+
+    .win {
+      color: #00ff88;
+    }
+
+    .lose {
+      color: #ff4444;
+    }
+
+    .info {
+      margin-top: 12px;
+      font-size: 18px;
+      color: #999;
+      min-height: 24px;
+    }
+
+    @media (max-width: 480px) {
+      .title {
+        font-size: 42px;
+      }
+
+      .result {
+        font-size: 24px;
+      }
+
+      .info {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Sayıyı Bil</div>
+
+    <div class="streaks">
+      <div>Bilme Streak: <span id="winStreak">0</span></div>
+      <div>Bilememe Streak: <span id="loseStreak">0</span></div>
+    </div>
+
+    <div class="input-group">
+      <input
+        type="number"
+        id="guessInput"
+        min="0"
+        max="100"
+        placeholder="0 - 100"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        autocomplete="off"
+      />
+      <button id="guessBtn">Tahmin Et</button>
+    </div>
+
+    <div id="result" class="result"></div>
+    <div id="info" class="info"></div>
+  </div>
+
+  <script>
+    let winStreak = 0;
+    let loseStreak = 0;
+
+    const input = document.getElementById("guessInput");
+    const button = document.getElementById("guessBtn");
+    const result = document.getElementById("result");
+    const info = document.getElementById("info");
+
+    function generateNumber() {
+      return Math.floor(Math.random() * 101);
+    }
+
+    function checkGuess() {
+      const guess = Number(input.value);
+
+      if (input.value === "" || guess < 0 || guess > 100) {
+        result.textContent = "0 ile 100 arasında bir sayı gir!";
+        result.className = "result lose";
+        info.textContent = "";
+        input.focus();
+        return;
+      }
+
+      const randomNumber = generateNumber();
+
+      if (guess === randomNumber) {
+        winStreak++;
+        loseStreak = 0;
+
+        result.textContent = "KAZANDIN!";
+        result.className = "result win";
+        info.textContent = `Doğru sayı: ${randomNumber}`;
+      } else {
+        loseStreak++;
+        winStreak = 0;
+
+        result.textContent = "KAYBETTİN!";
+        result.className = "result lose";
+        info.textContent = `Doğru sayı: ${randomNumber}`;
+      }
+
+      document.getElementById("winStreak").textContent = winStreak;
+      document.getElementById("loseStreak").textContent = loseStreak;
+
+      input.value = "";
+
+      setTimeout(() => {
+        input.focus();
+      }, 50);
+    }
+
+    button.addEventListener("click", checkGuess);
+
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        checkGuess();
+      }
+    });
+
+    // Bazı telefonlarda kullanıcı ilk dokununca focus daha güvenli çalışsın
+    input.addEventListener("touchstart", function() {
+      input.focus();
+    });
+
+    // Sayfa yüklenince dene (her telefonda çalışmayabilir)
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        input.focus();
+      }, 300);
+    });
+  </script>
+</body>
+</html>
