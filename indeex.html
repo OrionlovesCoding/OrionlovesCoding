@@ -23,10 +23,54 @@
       padding: 20px;
     }
 
+    .wrapper {
+      display: flex;
+      gap: 24px;
+      width: 100%;
+      max-width: 950px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     .container {
       text-align: center;
       width: 100%;
       max-width: 420px;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .side-panel {
+      width: 220px;
+      background: #0d0d0d;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 260px;
+    }
+
+    .side-title {
+      font-size: 20px;
+      color: #ccc;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .top-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 18px;
+      color: #aaa;
+    }
+
+    .top-list li {
+      background: #151515;
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: center;
     }
 
     .title {
@@ -41,7 +85,7 @@
       font-size: 15px;
       color: #bbb;
       margin-bottom: 28px;
-      line-height: 1.8;
+      line-height: 1.9;
     }
 
     .input-group {
@@ -52,7 +96,7 @@
       margin-bottom: 24px;
     }
 
-    input[type="number"] {
+    input[type="text"] {
       width: 100%;
       max-width: 260px;
       padding: 18px;
@@ -63,11 +107,11 @@
       color: white;
       text-align: center;
       outline: none;
-      appearance: none;
       -webkit-appearance: none;
+      appearance: none;
     }
 
-    input[type="number"]:focus {
+    input[type="text"]:focus {
       border-color: #888;
       box-shadow: 0 0 10px rgba(255,255,255,0.08);
     }
@@ -113,7 +157,29 @@
       min-height: 24px;
     }
 
-    @media (max-width: 480px) {
+    .cheat {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ffd966;
+      min-height: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .wrapper {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .side-panel {
+        width: 100%;
+        max-width: 420px;
+        order: 2;
+      }
+
+      .container {
+        order: 1;
+      }
+
       .title {
         font-size: 42px;
       }
@@ -129,82 +195,165 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="title">Sayıyı Bil</div>
+  <div class="wrapper">
+    <div class="container">
+      <div class="title">Sayıyı Bil</div>
 
-    <div class="streaks">
-      <div>Bilme Streak: <span id="winStreak">0</span></div>
-      <div>Bilememe Streak: <span id="loseStreak">0</span></div>
+      <div class="streaks">
+        <div>Bilme Streak: <span id="winStreak">0</span> | En Yüksek: <span id="bestWinStreak">0</span></div>
+        <div>Bilememe Streak: <span id="loseStreak">0</span> | En Yüksek: <span id="bestLoseStreak">0</span></div>
+      </div>
+
+      <div class="input-group">
+        <input
+          type="text"
+          id="guessInput"
+          placeholder="0 - 100"
+          inputmode="numeric"
+          autocomplete="off"
+        />
+        <button id="guessBtn">Tahmin Et</button>
+      </div>
+
+      <div id="result" class="result"></div>
+      <div id="info" class="info"></div>
+      <div id="cheatLabel" class="cheat"></div>
     </div>
 
-    <div class="input-group">
-      <input
-        type="number"
-        id="guessInput"
-        min="0"
-        max="100"
-        placeholder="0 - 100"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        autocomplete="off"
-      />
-      <button id="guessBtn">Tahmin Et</button>
+    <div class="side-panel">
+      <div class="side-title">En Çok Gelen 5 Sayı</div>
+      <ul class="top-list" id="topNumbersList">
+        <li>Henüz veri yok</li>
+      </ul>
     </div>
-
-    <div id="result" class="result"></div>
-    <div id="info" class="info"></div>
   </div>
 
   <script>
     let winStreak = 0;
     let loseStreak = 0;
+    let bestWinStreak = 0;
+    let bestLoseStreak = 0;
+
+    let currentNumber = generateNumber();
+    let numberCounts = {};
 
     const input = document.getElementById("guessInput");
     const button = document.getElementById("guessBtn");
     const result = document.getElementById("result");
     const info = document.getElementById("info");
+    const cheatLabel = document.getElementById("cheatLabel");
+    const topNumbersList = document.getElementById("topNumbersList");
 
     function generateNumber() {
-      return Math.floor(Math.random() * 101);
+      const num = Math.floor(Math.random() * 101);
+
+      if (!numberCounts[num]) {
+        numberCounts[num] = 0;
+      }
+      numberCounts[num]++;
+
+      updateTopNumbers();
+
+      return num;
+    }
+
+    function updateTopNumbers() {
+      const sorted = Object.entries(numberCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      topNumbersList.innerHTML = "";
+
+      if (sorted.length === 0) {
+        topNumbersList.innerHTML = "<li>Henüz veri yok</li>";
+        return;
+      }
+
+      sorted.forEach(([num, count], index) => {
+        const li = document.createElement("li");
+        li.textContent = `${index + 1}. ${num} (${count}x)`;
+        topNumbersList.appendChild(li);
+      });
+    }
+
+    function updateBestStreaks() {
+      if (winStreak > bestWinStreak) {
+        bestWinStreak = winStreak;
+      }
+
+      if (loseStreak > bestLoseStreak) {
+        bestLoseStreak = loseStreak;
+      }
+
+      document.getElementById("bestWinStreak").textContent = bestWinStreak;
+      document.getElementById("bestLoseStreak").textContent = bestLoseStreak;
+    }
+
+    function updateCurrentStreaks() {
+      document.getElementById("winStreak").textContent = winStreak;
+      document.getElementById("loseStreak").textContent = loseStreak;
     }
 
     function checkGuess() {
-      const guess = Number(input.value);
+      const value = input.value.trim();
 
-      if (input.value === "" || guess < 0 || guess > 100) {
-        result.textContent = "0 ile 100 arasında bir sayı gir!";
-        result.className = "result lose";
+      // Hile kodu
+      if (value === "0.01") {
+        cheatLabel.textContent = `🤫 Doğru sayı şu an: ${currentNumber}`;
+        result.textContent = "";
         info.textContent = "";
+        input.value = "";
         input.focus();
         return;
       }
 
-      const randomNumber = generateNumber();
+      // Sadece tam sayı kontrolü
+      if (!/^\d+$/.test(value)) {
+        result.textContent = "Sadece 0 ile 100 arasında tam sayı gir!";
+        result.className = "result lose";
+        info.textContent = "";
+        cheatLabel.textContent = "";
+        input.focus();
+        return;
+      }
 
-      if (guess === randomNumber) {
+      const guess = Number(value);
+
+      if (guess < 0 || guess > 100) {
+        result.textContent = "0 ile 100 arasında bir sayı gir!";
+        result.className = "result lose";
+        info.textContent = "";
+        cheatLabel.textContent = "";
+        input.focus();
+        return;
+      }
+
+      if (guess === currentNumber) {
         winStreak++;
         loseStreak = 0;
 
         result.textContent = "KAZANDIN!";
         result.className = "result win";
-        info.textContent = `Doğru sayı: ${randomNumber}`;
+        info.textContent = `Doğru sayı: ${currentNumber}`;
       } else {
         loseStreak++;
         winStreak = 0;
 
         result.textContent = "KAYBETTİN!";
         result.className = "result lose";
-        info.textContent = `Doğru sayı: ${randomNumber}`;
+        info.textContent = `Doğru sayı: ${currentNumber}`;
       }
 
-      document.getElementById("winStreak").textContent = winStreak;
-      document.getElementById("loseStreak").textContent = loseStreak;
+      updateCurrentStreaks();
+      updateBestStreaks();
+
+      cheatLabel.textContent = "";
+
+      // Yeni tur için yeni sayı üret
+      currentNumber = generateNumber();
 
       input.value = "";
-
-      setTimeout(() => {
-        input.focus();
-      }, 50);
+      setTimeout(() => input.focus(), 50);
     }
 
     button.addEventListener("click", checkGuess);
@@ -215,13 +364,23 @@
       }
     });
 
-    // Bazı telefonlarda kullanıcı ilk dokununca focus daha güvenli çalışsın
+    input.addEventListener("input", function() {
+      // Hile kodu için nokta hariç normalde sadece sayı gibi davranacağız
+      // Ama 0.01 girebilmek için bunu çok sert filtrelemiyoruz
+      if (input.value.length > 5) {
+        input.value = input.value.slice(0, 5);
+      }
+    });
+
     input.addEventListener("touchstart", function() {
       input.focus();
     });
 
-    // Sayfa yüklenince dene (her telefonda çalışmayabilir)
     window.addEventListener("load", () => {
+      updateCurrentStreaks();
+      updateBestStreaks();
+      updateTopNumbers();
+
       setTimeout(() => {
         input.focus();
       }, 300);
